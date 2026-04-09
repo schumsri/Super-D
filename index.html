@@ -3,37 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kong Downloader Ultra</title>
+    <title>Kong Saver v4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #050505; color: #fff; font-family: sans-serif; }
-        .card { background: #111; border: 1px solid #222; border-radius: 28px; }
-        .btn-gradient { background: linear-gradient(90deg, #3b82f6, #2563eb); }
-        .loader { border: 3px solid #222; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        body { background: #000; color: #fff; font-family: sans-serif; }
+        .glass-card { background: #111; border: 1px solid #333; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .loading-ring { border: 2px solid #333; border-top: 2px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6">
-    <div class="card w-full max-w-sm p-8 shadow-2xl">
-        <h1 class="text-2xl font-bold text-center mb-6 text-white">Video Saver PRO</h1>
+    <div class="glass-card w-full max-w-sm p-8">
+        <h1 class="text-xl font-bold text-center mb-6 text-blue-400">Video Downloader</h1>
         
         <div class="space-y-4">
             <input type="text" id="urlInput" placeholder="วางลิงก์ IG, TikTok, FB..." 
-                class="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:ring-2 focus:ring-blue-500">
+                class="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-blue-500 transition-all">
             
-            <button onclick="masterDownload()" id="btn"
-                class="btn-gradient w-full text-white font-bold py-4 rounded-2xl flex items-center justify-center transition-all active:scale-95">
-                <span id="btnText">ดาวน์โหลดทันที</span>
-                <div id="loader" class="loader ml-2 hidden"></div>
+            <button onclick="tryDownload()" id="btn"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center transition-all active:scale-95">
+                <span id="btnText">ดึงข้อมูลวิดีโอ</span>
+                <div id="loader" class="loading-ring ml-2 hidden"></div>
             </button>
         </div>
 
-        <div id="result" class="mt-8 hidden animate-bounce">
-            <a id="downloadLink" href="#" target="_blank"
-                class="block w-full bg-green-500 text-black text-center py-4 rounded-2xl font-black">
-                ✅ กดตรงนี้เพื่อบันทึกวิดีโอ
-            </a>
-            <p class="text-[10px] text-gray-500 text-center mt-3 uppercase tracking-widest">Open in new tab and Save</p>
+        <div id="result" class="mt-8 hidden">
+            <div class="p-4 bg-green-500/10 border border-green-500/30 rounded-2xl text-center">
+                <p class="text-green-400 text-sm mb-4 font-bold">เจอไฟล์แล้วค่ะ!</p>
+                <a id="downloadLink" href="#" target="_blank"
+                    class="block w-full bg-white text-black py-4 rounded-xl font-black shadow-lg">
+                    ดาวน์โหลด / บันทึกไฟล์
+                </a>
+            </div>
+            <p class="text-[10px] text-gray-500 text-center mt-3 uppercase">หากไม่โหลดอัตโนมัติ ให้กดค้างที่ปุ่มแล้วเลือก "Download Link"</p>
+        </div>
+
+        <div id="errorBox" class="mt-6 hidden p-4 bg-red-900/20 border border-red-500/30 rounded-2xl text-red-400 text-xs">
+            <p id="errorMsg"></p>
+        </div>
+    </div>
+
+    <script>
+        async function tryDownload() {
+            const url = document.getElementById('urlInput').value.trim();
+            const btn = document.getElementById('btn');
+            const btnText = document.getElementById('btnText');
+            const loader = document.getElementById('loader');
+            const result = document.getElementById('result');
+            const errorBox = document.getElementById('errorBox');
+
+            if (!url) return alert('วางลิงก์ก่อนนะคะคุณก้อง');
+
+            btn.disabled = true;
+            btnText.innerText = 'กำลังพยายามดึงข้อมูล...';
+            loader.classList.remove('hidden');
+            result.classList.add('hidden');
+            errorBox.classList.add('hidden');
+
+            // ใช้ API ตัวหลักที่อัปเดตระบบ Bypass แล้ว
+            const apiEndpoint = 'https://api.cobalt.tools/api/json';
+
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        url: url,
+                        vQuality: '1080',
+                        isAudioOnly: false,
+                        filenameStyle: 'basic'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.url) {
+                    document.getElementById('downloadLink').href = data.url;
+                    result.classList.remove('hidden');
+                } else {
+                    throw new Error(data.text || 'API ไม่สามารถดึงไฟล์ได้ (อาจเป็น Private หรือโดนบล็อก)');
+                }
+
+            } catch (err) {
+                console.error(err);
+                errorBox.classList.remove('hidden');
+                document.getElementById('errorMsg').innerText = "เกิดข้อผิดพลาด: " + err.message + "\n\nคำแนะนำ: ลองปิดแอปแล้วเปิดใหม่ หรือรอ 2 นาทีเพื่อให้ IP รีเซ็ตนะคะ";
+            } finally {
+                btn.disabled = false;
+                btnText.innerText = 'ดึงข้อมูลวิดีโอ';
+                loader.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
         </div>
 
         <div id="status" class="mt-4 text-center text-xs text-gray-500"></div>
