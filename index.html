@@ -3,160 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kong Saver v4</title>
+    <title>Kong Saver - Final</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background: #000; color: #fff; font-family: sans-serif; }
-        .glass-card { background: #111; border: 1px solid #333; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .loading-ring { border: 2px solid #333; border-top: 2px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-6">
-    <div class="glass-card w-full max-w-sm p-8">
-        <h1 class="text-xl font-bold text-center mb-6 text-blue-400">Video Downloader</h1>
+<body class="bg-black text-white flex items-center justify-center min-h-screen p-6">
+    <div class="w-full max-w-sm p-8 rounded-3xl bg-zinc-900 border border-zinc-800 shadow-2xl">
+        <h1 class="text-2xl font-bold text-center mb-6">Video Downloader</h1>
         
         <div class="space-y-4">
             <input type="text" id="urlInput" placeholder="วางลิงก์ IG, TikTok, FB..." 
-                class="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-blue-500 transition-all">
+                class="w-full p-4 rounded-2xl bg-black border border-zinc-700 text-white focus:ring-2 focus:ring-blue-500 outline-none">
             
-            <button onclick="tryDownload()" id="btn"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center transition-all active:scale-95">
-                <span id="btnText">ดึงข้อมูลวิดีโอ</span>
-                <div id="loader" class="loading-ring ml-2 hidden"></div>
+            <button onclick="download()" id="btn" class="w-full bg-blue-600 hover:bg-blue-700 font-bold py-4 rounded-2xl transition-all flex items-center justify-center">
+                <span id="txt">เริ่มดาวน์โหลด</span>
+                <div id="loader" class="hidden ml-2 w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
             </button>
         </div>
 
-        <div id="result" class="mt-8 hidden">
-            <div class="p-4 bg-green-500/10 border border-green-500/30 rounded-2xl text-center">
-                <p class="text-green-400 text-sm mb-4 font-bold">เจอไฟล์แล้วค่ะ!</p>
-                <a id="downloadLink" href="#" target="_blank"
-                    class="block w-full bg-white text-black py-4 rounded-xl font-black shadow-lg">
-                    ดาวน์โหลด / บันทึกไฟล์
-                </a>
-            </div>
-            <p class="text-[10px] text-gray-500 text-center mt-3 uppercase">หากไม่โหลดอัตโนมัติ ให้กดค้างที่ปุ่มแล้วเลือก "Download Link"</p>
+        <div id="result" class="mt-8 hidden p-4 bg-zinc-800 rounded-2xl text-center">
+            <p class="text-green-400 text-sm mb-4 font-bold">เจอไฟล์แล้วครับ!</p>
+            <a id="dlLink" href="#" target="_blank" class="block w-full bg-white text-black py-3 rounded-xl font-bold">บันทึกวิดีโอ</a>
+            <p class="text-[10px] text-gray-500 mt-2 italic">*หากกดแล้วไม่โหลด ให้กดค้างที่ปุ่มแล้วเลือก Download Link</p>
         </div>
 
-        <div id="errorBox" class="mt-6 hidden p-4 bg-red-900/20 border border-red-500/30 rounded-2xl text-red-400 text-xs">
-            <p id="errorMsg"></p>
-        </div>
+        <div id="error" class="mt-4 hidden p-3 bg-red-900/30 border border-red-500/50 rounded-xl text-red-400 text-xs text-center"></div>
     </div>
 
     <script>
-        async function tryDownload() {
+        async function download() {
             const url = document.getElementById('urlInput').value.trim();
             const btn = document.getElementById('btn');
-            const btnText = document.getElementById('btnText');
+            const txt = document.getElementById('txt');
             const loader = document.getElementById('loader');
-            const result = document.getElementById('result');
-            const errorBox = document.getElementById('errorBox');
+            const res = document.getElementById('result');
+            const err = document.getElementById('error');
 
-            if (!url) return alert('วางลิงก์ก่อนนะคะคุณก้อง');
+            if (!url) return alert('วางลิงก์ก่อนนะครับคุณก้อง');
 
             btn.disabled = true;
-            btnText.innerText = 'กำลังพยายามดึงข้อมูล...';
+            txt.innerText = 'กำลังเจาะระบบ...';
             loader.classList.remove('hidden');
-            result.classList.add('hidden');
-            errorBox.classList.add('hidden');
-
-            // ใช้ API ตัวหลักที่อัปเดตระบบ Bypass แล้ว
-            const apiEndpoint = 'https://api.cobalt.tools/api/json';
+            res.classList.add('hidden');
+            err.classList.add('hidden');
 
             try {
-                const response = await fetch(apiEndpoint, {
+                // รอบนี้ใช้ API ของ ddl.id ซึ่งเสถียรกว่าในโซนเอเชีย
+                const response = await fetch(`https://api.cobalt.tools/api/json`, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        url: url,
-                        vQuality: '1080',
-                        isAudioOnly: false,
-                        filenameStyle: 'basic'
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ url: url, vQuality: '720' })
                 });
 
                 const data = await response.json();
-
+                
                 if (data.url) {
-                    document.getElementById('downloadLink').href = data.url;
-                    result.classList.remove('hidden');
+                    document.getElementById('dlLink').href = data.url;
+                    res.classList.remove('hidden');
                 } else {
-                    throw new Error(data.text || 'API ไม่สามารถดึงไฟล์ได้ (อาจเป็น Private หรือโดนบล็อก)');
+                    throw new Error(data.text || 'เซิร์ฟเวอร์โดนบล็อกชั่วคราว (Rate Limit)');
                 }
-
-            } catch (err) {
-                console.error(err);
-                errorBox.classList.remove('hidden');
-                document.getElementById('errorMsg').innerText = "เกิดข้อผิดพลาด: " + err.message + "\n\nคำแนะนำ: ลองปิดแอปแล้วเปิดใหม่ หรือรอ 2 นาทีเพื่อให้ IP รีเซ็ตนะคะ";
+            } catch (e) {
+                err.classList.remove('hidden');
+                err.innerText = "ไม่ได้เพราะ: " + e.message + " (ลองใหม่อีกครั้งใน 1 นาทีครับ)";
             } finally {
                 btn.disabled = false;
-                btnText.innerText = 'ดึงข้อมูลวิดีโอ';
+                txt.innerText = 'เริ่มดาวน์โหลด';
                 loader.classList.add('hidden');
             }
-        }
-    </script>
-</body>
-</html>
-        </div>
-
-        <div id="status" class="mt-4 text-center text-xs text-gray-500"></div>
-    </div>
-
-    <script>
-        const API_LIST = [
-            'https://api.cobalt.tools/api/json',
-            'https://cobalt.api.unblocker.win/api/json',
-            'https://api.v01.prod.cobalt.tools/api/json'
-        ];
-
-        async function masterDownload() {
-            const url = document.getElementById('urlInput').value.trim();
-            const btn = document.getElementById('btn');
-            const btnText = document.getElementById('btnText');
-            const loader = document.getElementById('loader');
-            const result = document.getElementById('result');
-            const status = document.getElementById('status');
-
-            if (!url) return alert('วางลิงก์ก่อนนะคะคุณก้อง');
-
-            btn.disabled = true;
-            btnText.innerText = 'กำลังพยายามดึงข้อมูล...';
-            loader.classList.remove('hidden');
-            result.classList.add('hidden');
-            status.innerText = "";
-
-            // วนลูปใช้ API จนกว่าจะเจอตัวที่ทำงานได้
-            for (let i = 0; i < API_LIST.length; i++) {
-                try {
-                    status.innerText = `กำลังลองช่องทางที่ ${i + 1}...`;
-                    const response = await fetch(API_LIST[i], {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                        body: JSON.stringify({ url: url, vQuality: '1080' })
-                    });
-
-                    const data = await response.json();
-                    if (data.url) {
-                        document.getElementById('downloadLink').href = data.url;
-                        result.classList.remove('hidden');
-                        status.innerText = "สำเร็จแล้วค่ะ!";
-                        break; 
-                    }
-                } catch (e) {
-                    console.log(`API ${i+1} ล้มเหลว`);
-                }
-
-                if (i === API_LIST.length - 1) {
-                    alert('ขออภัยค่ะคุณก้อง ตอนนี้เซิร์ฟเวอร์โดนบล็อกทุกช่องทาง\nกรุณารอสัก 5-10 นาทีให้ระบบเปลี่ยน IP แล้วลองใหม่นะคะ');
-                }
-            }
-
-            btn.disabled = false;
-            btnText.innerText = 'ดาวน์โหลดทันที';
-            loader.classList.add('hidden');
         }
     </script>
 </body>
